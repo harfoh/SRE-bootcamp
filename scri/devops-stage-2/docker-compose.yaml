@@ -1,0 +1,61 @@
+version: '3.8'
+services:
+  
+  nginx:
+    build:
+      context: ./frontend
+    ports:
+      - "80:80"
+    env_file:
+      - frontend/.env
+    networks:
+      - mine   
+  
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - backend/.env
+    environment:
+      PYTHONPATH: /app
+    depends_on:
+      - db  
+    networks:
+      - mine   
+
+  db:
+    image: postgres:13
+    volumes:
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: changethis123
+    ports:
+      - "5432:5432"
+    networks:
+      - mine   
+
+  adminer:
+    image: adminer
+    ports:
+      - "8081:8080"
+    networks:
+      - mine 
+
+  nginx-proxy-manager:
+    image: jlesage/nginx-proxy-manager
+    ports:
+      - "8181:8181"
+      - "8080:8080"
+      - "4443:4443"
+    volumes:
+      - "/docker/appdata/nginx-proxy-manager:/config:rw" 
+    networks:
+      - mine      
+
+networks:
+  mine:
+    driver: bridge      
